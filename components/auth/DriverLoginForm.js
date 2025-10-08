@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import { apiService } from '../../services/api';
 import './DriverLoginForm.css';
 
 export default function DriverLoginForm({ onLogin }) {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -72,6 +74,9 @@ export default function DriverLoginForm({ onLogin }) {
       
       if (onLogin) {
         onLogin(true);
+      } else {
+        // Redirect to dashboard on successful login
+        router.push('/dashboard');
       }
 
     } catch (error) {

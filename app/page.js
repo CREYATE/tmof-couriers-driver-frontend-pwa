@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import LoginScreen from './login/page';
+import DriverLoginForm from '../components/auth/DriverLoginForm';
 import MainTabNavigator from '../components/navigation/MainTabNavigator';
 import SplashScreen from '../components/screens/SplashScreen';
 import { apiService } from '../services/api';
@@ -68,7 +68,7 @@ export default function Home() {
 
   // After splash, show login form as landing page if not authenticated
   if (!isAuthenticated) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return <DriverLoginForm onLogin={handleLogin} />;
   }
 
   // Only show main app if authenticated
