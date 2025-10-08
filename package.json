@@ -1,0 +1,33 @@
+{
+  "name": "tmof-couriers-driver-mobile-pwa",
+  "version": "1.0.0",
+  "description": "TMOF Couriers Driver Mobile PWA - Exact replica of mobile app",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@stomp/stompjs": "^7.2.0",
+    "chart.js": "^4.4.0",
+    "lucide-react": "^0.263.1",
+    "next": "14.0.0",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.2.0",
+    "react-signature-canvas": "^1.0.6",
+    "signature_pad": "^5.1.1",
+    "sockjs-client": "^1.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18.2.14",
+    "@types/react-dom": "^18.2.6",
+    "@types/sockjs-client": "^1.5.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.0.0",
+    "typescript": "^5.1.6"
+  }
+}

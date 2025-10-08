@@ -1,0 +1,37 @@
+.order-details-container {
+  flex: 1;
+  background-color: #ffd215;
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.order-details-content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.order-details-card {
+  background-color: #fff;
+}
+
+.order-info h3 {
+  color: #0C0E29;
+  margin-bottom: 16px;
+}
+
+.order-info p {
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.order-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.order-actions button {
+  flex: 1;
+  min-width: 120px;
+}

@@ -1,0 +1,25 @@
+.stats-container {
+  flex: 1;
+  background-color: #ffd215;
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.stats-content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.stats-card {
+  background-color: #fff;
+}
+
+.stats-info h3 {
+  color: #0C0E29;
+  margin-bottom: 16px;
+}
+
+.stats-info p {
+  color: #6b7280;
+}

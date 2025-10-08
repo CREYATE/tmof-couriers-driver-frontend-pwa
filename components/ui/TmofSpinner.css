@@ -1,0 +1,49 @@
+.tmof-spinner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tmof-spinner-backdrop {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tmof-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.tmof-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 210, 21, 0.3);
+  border-top: 4px solid #ffd215;
+  border-radius: 50%;
+  animation: tmof-spin 1s linear infinite;
+}
+
+.tmof-spinner-text {
+  color: #ffd215;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+@keyframes tmof-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
