@@ -381,66 +381,6 @@ export default function DriverAssignedOrders() {
             <span>View Details</span>
           </button>
           
-          {order.status.toUpperCase() === 'AWAITING_COLLECTION' && (
-            <button
-              className="collect-button"
-              onClick={async () => {
-                try {
-                  console.log(`Original order data before collect:`, {
-                    notes: order.notes,
-                    deliveryNotes: order.deliveryNotes,
-                    status: order.status
-                  });
-                  
-                  const payload = {
-                    status: 'COLLECTED',
-                    signature: null,
-                    // Preserve original notes when marking as collected
-                    deliveryNotes: order.originalCustomerNotes || order.originalNotes || order.customerNotes || order.deliveryNotes || ''
-                  };
-
-                  console.log(`Moving order ${order.trackingNumber} from AWAITING_COLLECTION to COLLECTED`);
-                  console.log(`Payload being sent:`, payload);
-                  
-                  const result = await apiService.updateOrderStatus(order.trackingNumber, payload);
-                  console.log(`Result received from backend:`, result);
-                  
-                  if (result) {
-                    // Update local state immediately
-                    setOrders(prevOrders => 
-                      prevOrders.map(prevOrder => 
-                        prevOrder.trackingNumber === order.trackingNumber 
-                          ? { 
-                              ...prevOrder, 
-                              status: 'COLLECTED',
-                              // Keep the preserved original notes
-                              originalCustomerNotes: prevOrder.originalCustomerNotes
-                            }
-                          : prevOrder
-                      )
-                    );
-
-                    // Show notification
-                    setNotification(`Order ${order.trackingNumber} marked as Collected`);
-                    setTimeout(() => setNotification(""), 3000);
-                    
-                    // Switch to COLLECTED tab
-                    setTimeout(() => {
-                      setActiveTab('COLLECTED');
-                    }, 1000);
-                    
-                    console.log(`Successfully moved order ${order.trackingNumber} to COLLECTED`);
-                  }
-                } catch (error) {
-                  console.error(`Failed to move order ${order.trackingNumber} to COLLECTED:`, error);
-                  alert('Failed to mark order as Collected. Please try again.');
-                }
-              }}
-            >
-              <span>Mark as Collected</span>
-            </button>
-          )}
-          
           {order.status.toUpperCase() === 'COLLECTED' && (
             <button
               className="transit-button"
@@ -455,8 +395,10 @@ export default function DriverAssignedOrders() {
                   const payload = {
                     status: 'IN_TRANSIT',
                     signature: null,
-                    // Only send deliveryNotes field that backend expects
-                    deliveryNotes: order.originalCustomerNotes || order.originalNotes || order.customerNotes || order.deliveryNotes || ''
+                    // Send the original customer notes, not the system-generated ones
+                    deliveryNotes: order.originalCustomerNotes || order.originalNotes || order.customerNotes || '',
+                    notes: order.originalCustomerNotes || order.originalNotes || order.customerNotes || '',
+                    preserveOriginalNotes: true  // Flag to tell backend not to generate automatic messages
                   };
 
                   console.log(`Moving order ${order.trackingNumber} from COLLECTED to IN_TRANSIT`);

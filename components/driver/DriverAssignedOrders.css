@@ -265,26 +265,6 @@
   background-color: #e5bd13;
 }
 
-.collect-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #059669;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-  justify-content: center;
-}
-
-.collect-button:hover {
-  background-color: #047857;
-}
-
 .transit-button {
   display: flex;
   align-items: center;

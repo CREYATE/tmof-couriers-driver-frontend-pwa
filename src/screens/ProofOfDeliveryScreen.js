@@ -83,7 +83,11 @@ export default function DriverProofOfDelivery({ order, setStatus, onGoBack }) {
       setError("");
 
       const payload = { 
-        status: newStatus
+        status: newStatus,
+        // Preserve original customer notes, not system-generated ones
+        originalNotes: order.originalCustomerNotes || order.originalNotes || order.customerNotes || 
+                      (order.notes && !order.notes.includes('Automatically') ? order.notes : ''),
+        preserveOriginalNotes: true
       };
       if (signatureData) {
         payload.signature = signatureData;
@@ -93,7 +97,6 @@ export default function DriverProofOfDelivery({ order, setStatus, onGoBack }) {
       } else {
         // Preserve existing original notes if no new delivery notes provided
         payload.deliveryNotes = order.originalCustomerNotes || order.originalNotes || order.customerNotes || 
-                               order.deliveryNotes || 
                                (order.notes && !order.notes.includes('Automatically') ? order.notes : '');
       }
 
