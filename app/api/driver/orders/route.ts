@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
+
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -13,9 +15,7 @@ export async function GET(request: NextRequest) {
 
     console.log("Driver orders proxy - Auth header:", authHeader);
     
-    // Use production backend URL
-    const backendUrl = 'https://tmof-couriers.onrender.com';
-    const response = await fetch(`${backendUrl}/api/orders/driver/orders`, {
+    const response = await fetch(`${BACKEND_URL}/api/orders/driver/orders`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

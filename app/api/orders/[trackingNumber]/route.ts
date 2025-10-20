@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { trackingNumber: string } }
@@ -18,9 +20,7 @@ export async function GET(
     
     console.log("Order details proxy - Tracking number:", trackingNumber);
     
-    // Use production backend URL
-    const backendUrl = 'https://tmof-couriers.onrender.com';
-    const response = await fetch(`${backendUrl}/api/orders/${trackingNumber}`, {
+    const response = await fetch(`${BACKEND_URL}/api/orders/${trackingNumber}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { trackingNumber: string } }
@@ -20,9 +22,7 @@ export async function PUT(
     console.log("Order location update proxy - Tracking number:", trackingNumber);
     console.log("Order location update proxy - Body:", body);
     
-    // Use production backend URL
-    const backendUrl = 'https://tmof-couriers.onrender.com';
-    const response = await fetch(`${backendUrl}/api/orders/update/location/${trackingNumber}`, {
+    const response = await fetch(`${BACKEND_URL}/api/orders/update/location/${trackingNumber}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

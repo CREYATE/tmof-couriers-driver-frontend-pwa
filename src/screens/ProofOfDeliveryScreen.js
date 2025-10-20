@@ -8,7 +8,7 @@ import { apiService } from "../../services/api";
 import './ProofOfDeliveryScreen.css';
 import '../../components/driver/DashboardPlaceholder.css';
 
-export default function DriverProofOfDelivery({ order, setStatus, onGoBack }) {
+export default function DriverProofOfDelivery({ order, setStatus, onGoBack, onCloseCard }) {
   const [notes, setNotes] = useState(order?.deliveryNotes || "");
   const [isCompleted, setIsCompleted] = useState(order?.status === "DELIVERED");
   const [isUpdating, setIsUpdating] = useState(false);
@@ -18,6 +18,14 @@ export default function DriverProofOfDelivery({ order, setStatus, onGoBack }) {
   const [currentStatus, setCurrentStatus] = useState(order?.status || "AWAITING_COLLECTION");
   const canvasRef = useRef(null);
   const signaturePadRef = useRef(null);
+
+  const handleCloseCard = () => {
+    if (onCloseCard) {
+      onCloseCard(); // Close the card and stay in the current tab
+    } else if (onGoBack) {
+      onGoBack(); // Fallback to going back
+    }
+  };
 
   // Sync currentStatus with order prop changes
   useEffect(() => {
@@ -83,21 +91,20 @@ export default function DriverProofOfDelivery({ order, setStatus, onGoBack }) {
       setError("");
 
       const payload = { 
-        status: newStatus,
-        // Preserve original customer notes, not system-generated ones
-        originalNotes: order.originalCustomerNotes || order.originalNotes || order.customerNotes || 
-                      (order.notes && !order.notes.includes('Automatically') ? order.notes : ''),
-        preserveOriginalNotes: true
+        status: newStatus
       };
+      
       if (signatureData) {
         payload.signature = signatureData;
       }
+      
+      // Always set deliveryNotes - either new notes or preserved original notes
       if (deliveryNotes) {
         payload.deliveryNotes = deliveryNotes;
       } else {
         // Preserve existing original notes if no new delivery notes provided
         payload.deliveryNotes = order.originalCustomerNotes || order.originalNotes || order.customerNotes || 
-                               (order.notes && !order.notes.includes('Automatically') ? order.notes : '');
+                               (order.notes && !order.notes.includes('Automatically') ? order.notes : '') || '';
       }
 
       const response = await apiService.updateOrderStatus(order.trackingNumber, payload);
@@ -283,36 +290,48 @@ export default function DriverProofOfDelivery({ order, setStatus, onGoBack }) {
   if (isCompleted) {
     return (
       <div className="completed-container">
-        <div className="success-icon">
-          <span className="checkmark">✓</span>
-        </div>
-        <h2 className="completed-title">Order Delivered Successfully</h2>
-        <p className="completed-subtitle">
-          This order has been marked as delivered and completed.
-        </p>
-        
-        {/* Delivery Summary */}
-        <div className="delivery-summary">
-          <h3 className="summary-title">Delivery Summary</h3>
-          
-          <div className="summary-row">
-            <span className="summary-label">Delivered to:</span>
-            <span className="summary-value">{order.customerName}</span>
+        <div className="delivery-success-card">
+          <div className="card-header">
+            <div className="success-icon">
+              <span className="checkmark">✓</span>
+            </div>
+            <button 
+              className="close-card-button"
+              onClick={handleCloseCard}
+              aria-label="Close delivery card"
+            >
+              ✕
+            </button>
           </div>
           
-          <div className="summary-row">
-            <span className="summary-label">Delivery time:</span>
-            <span className="summary-value">{new Date().toLocaleString()}</span>
-          </div>
+          <h2 className="completed-title">Order Delivered Successfully</h2>
+          <p className="completed-subtitle">
+            This order has been marked as delivered and completed.
+          </p>
           
-          <div className="summary-row">
-            <span className="summary-label">Signature:</span>
-            <span className="summary-value">✓ Collected</span>
-          </div>
-          
-          <div className="summary-row">
-            <span className="summary-label">Notes:</span>
-            <span className="summary-value">{order.originalCustomerNotes || order.originalNotes || order.customerNotes || (order.notes && !order.notes.includes('Automatically') ? order.notes : '') || 'No additional notes'}</span>
+          {/* Delivery Summary */}
+          <div className="delivery-summary">
+            <h3 className="summary-title">Delivery Summary</h3>
+            
+            <div className="summary-row">
+              <span className="summary-label">Delivered to:</span>
+              <span className="summary-value">{order.recipientName}</span>
+            </div>
+            
+            <div className="summary-row">
+              <span className="summary-label">Delivery time:</span>
+              <span className="summary-value">{order.deliveredAt ? new Date(order.deliveredAt).toLocaleString() : new Date().toLocaleString()}</span>
+            </div>
+            
+            <div className="summary-row">
+              <span className="summary-label">Signature:</span>
+              <span className="summary-value">✓ Collected</span>
+            </div>
+            
+            <div className="summary-row">
+              <span className="summary-label">Notes:</span>
+              <span className="summary-value">{order.originalCustomerNotes || order.originalNotes || order.customerNotes || (order.notes && !order.notes.includes('Automatically') ? order.notes : '') || 'No additional notes'}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -426,14 +445,14 @@ export default function DriverProofOfDelivery({ order, setStatus, onGoBack }) {
                 {isUpdating ? "Processing..." : "Complete Delivery"}
               </Button>
               
-              {/* Back Button */}
+              {/* Close Button */}
               <Button
-                onClick={onGoBack}
+                onClick={handleCloseCard}
                 variant="outline"
-                className="back-button"
+                className="close-proof-button"
                 style={{ marginTop: '12px' }}
               >
-                ← Go Back
+                ✕ Close
               </Button>
             </div>
           </div>

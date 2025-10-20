@@ -89,11 +89,8 @@ function ProofOfDeliveryContent() {
 
   const handleGoBack = () => {
     try {
-      if (window.history.length > 1) {
-        router.back();
-      } else {
-        router.push('/');
-      }
+      // Always navigate to orders page instead of using browser back
+      router.push('/orders');
     } catch (error) {
       console.error('Navigation error:', error);
       router.push('/');
@@ -361,6 +358,7 @@ function ProofOfDeliveryContent() {
           order={order} 
           setStatus={handleStatusUpdate}
           onGoBack={handleGoBack}
+          onCloseCard={handleGoBack}
         />
       </div>
 

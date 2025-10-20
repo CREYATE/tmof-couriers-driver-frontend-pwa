@@ -5,6 +5,7 @@ import { Clock, Truck, CheckCircle, Calendar, XCircle, Package } from 'lucide-re
 import { useRouter } from 'next/navigation';
 import { apiService } from '../../services/api';
 import { webSocketService } from '../../services/websocket';
+import DriverProofOfDelivery from '../../src/screens/ProofOfDeliveryScreen';
 import './DriverAssignedOrders.css';
 
 const statusConfig = {
@@ -61,7 +62,49 @@ export default function DriverAssignedOrders() {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [notification, setNotification] = useState("");
+  const [selectedOrder, setSelectedOrder] = useState(null); // For showing delivery success card
+
+  // Helper function to open maps with address
+  const openMapsWithAddress = (address) => {
+    if (!address) return;
+    
+    // Encode the address for URL
+    const encodedAddress = encodeURIComponent(address);
+    
+    // Try to detect the platform and open appropriate maps app
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    
+    let mapsUrl;
+    
+    if (isIOS) {
+      // iOS - Try Apple Maps first, fallback to Google Maps
+      mapsUrl = `maps://maps.apple.com/?q=${encodedAddress}`;
+      
+      // Fallback to Google Maps if Apple Maps not available
+      const fallbackUrl = `https://maps.google.com/?q=${encodedAddress}`;
+      
+      // Try to open Apple Maps, if it fails, open Google Maps
+      window.open(mapsUrl, '_blank');
+      
+      // Add a small delay and fallback to Google Maps if needed
+      setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+          window.open(fallbackUrl, '_blank');
+        }
+      }, 500);
+      
+    } else if (isAndroid) {
+      // Android - Use Google Maps intent
+      mapsUrl = `intent://maps.google.com/?q=${encodedAddress}#Intent;scheme=https;package=com.google.android.apps.maps;end`;
+      window.open(mapsUrl, '_blank');
+      
+    } else {
+      // Desktop or other platforms - Use Google Maps web
+      mapsUrl = `https://maps.google.com/?q=${encodedAddress}`;
+      window.open(mapsUrl, '_blank');
+    }
+  };
 
   useEffect(() => {
     fetchDriverOrders();
@@ -74,21 +117,6 @@ export default function DriverAssignedOrders() {
       }
     };
   }, []);
-
-  // Auto-switch to COLLECTED tab if there are COLLECTED orders
-  useEffect(() => {
-    if (orders.length > 0) {
-      const collectedOrders = orders.filter(order => order.status.toUpperCase() === 'COLLECTED');
-      if (collectedOrders.length > 0 && activeTab === 'AWAITING_COLLECTION') {
-        console.log(`Found ${collectedOrders.length} COLLECTED orders, switching to COLLECTED tab`);
-        setActiveTab('COLLECTED');
-        
-        // Show notification
-        setNotification(`${collectedOrders.length} order(s) ready for transit - check Collected tab`);
-        setTimeout(() => setNotification(""), 4000);
-      }
-    }
-  }, [orders, activeTab]);
 
   const fetchDriverOrders = async () => {
     try {
@@ -172,23 +200,8 @@ export default function DriverAssignedOrders() {
             );
             
             if (existingIndex !== -1) {
-              const oldOrder = prevOrders[existingIndex];
               const updatedOrders = [...prevOrders];
               updatedOrders[existingIndex] = { ...updatedOrders[existingIndex], ...orderUpdate };
-              
-              // Check if status changed and switch to the new tab
-              if (oldOrder.status !== orderUpdate.status) {
-                const newStatus = orderUpdate.status.toUpperCase();
-                
-                // Show notification about the status change
-                setNotification(`Order ${orderUpdate.trackingNumber} moved to ${newStatus.replace('_', ' ')}`);
-                setTimeout(() => setNotification(""), 3000);
-                
-                // Auto-switch to the new status tab after a short delay
-                setTimeout(() => {
-                  setActiveTab(newStatus);
-                }, 1000);
-              }
               
               return updatedOrders;
             } else {
@@ -236,7 +249,18 @@ export default function DriverAssignedOrders() {
   };
 
   const filteredOrders = useMemo(() => {
-    return orders.filter(order => order.status.toUpperCase() === activeTab);
+    const filtered = orders.filter(order => order.status.toUpperCase() === activeTab);
+    
+    // Sort delivered orders by latest to oldest (most recent first)
+    if (activeTab === 'DELIVERED') {
+      return filtered.sort((a, b) => {
+        const dateA = new Date(a.createdAt);
+        const dateB = new Date(b.createdAt);
+        return dateB - dateA; // Descending order (latest first)
+      });
+    }
+    
+    return filtered;
   }, [orders, activeTab]);
 
   const ordersByStatus = useMemo(() => {
@@ -339,8 +363,8 @@ export default function DriverAssignedOrders() {
         <div className="customer-info">
           <div className="info-row">
             <div className="info-text">
-              <div className="info-label">{order.customerName}</div>
-              <div className="info-subtext">Customer</div>
+              <div className="info-label">{order.recipientName}</div>
+              <div className="info-subtext">Recipient</div>
             </div>
           </div>
           <div className="info-row">
@@ -354,8 +378,24 @@ export default function DriverAssignedOrders() {
         <div className="route-info">
           <div className="info-row">
             <div className="info-text">
-              <div className="info-label">From: {order.pickupAddress}</div>
-              <div className="info-label">To: {order.deliveryAddress}</div>
+              <div className="info-label">
+                From: <span 
+                  className="address-link pickup-address" 
+                  onClick={() => openMapsWithAddress(order.pickupAddress)}
+                  title="Click to open in maps"
+                >
+                  {order.pickupAddress}
+                </span>
+              </div>
+              <div className="info-label">
+                To: <span 
+                  className="address-link delivery-address" 
+                  onClick={() => openMapsWithAddress(order.deliveryAddress)}
+                  title="Click to open in maps"
+                >
+                  {order.deliveryAddress}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -375,73 +415,18 @@ export default function DriverAssignedOrders() {
             className="details-button"
             onClick={() => {
               console.log('Navigate to order details:', order.trackingNumber);
-              router.push(`/proof-of-delivery?trackingNumber=${order.trackingNumber}`);
+              
+              // For delivered orders, show the delivery success card inline
+              if (order.status.toUpperCase() === 'DELIVERED') {
+                setSelectedOrder(order);
+              } else {
+                // For other orders, navigate to proof of delivery page
+                router.push(`/proof-of-delivery?trackingNumber=${order.trackingNumber}`);
+              }
             }}
           >
             <span>View Details</span>
           </button>
-          
-          {order.status.toUpperCase() === 'COLLECTED' && (
-            <button
-              className="transit-button"
-              onClick={async () => {
-                try {
-                  console.log(`Original order data before update:`, {
-                    notes: order.notes,
-                    deliveryNotes: order.deliveryNotes,
-                    status: order.status
-                  });
-                  
-                  const payload = {
-                    status: 'IN_TRANSIT',
-                    signature: null,
-                    // Send the original customer notes, not the system-generated ones
-                    deliveryNotes: order.originalCustomerNotes || order.originalNotes || order.customerNotes || '',
-                    notes: order.originalCustomerNotes || order.originalNotes || order.customerNotes || '',
-                    preserveOriginalNotes: true  // Flag to tell backend not to generate automatic messages
-                  };
-
-                  console.log(`Moving order ${order.trackingNumber} from COLLECTED to IN_TRANSIT`);
-                  console.log(`Payload being sent:`, payload);
-                  
-                  const result = await apiService.updateOrderStatus(order.trackingNumber, payload);
-                  console.log(`Result received from backend:`, result);
-                  
-                  if (result) {
-                    // Update local state immediately but preserve original notes
-                    setOrders(prevOrders => 
-                      prevOrders.map(prevOrder => 
-                        prevOrder.trackingNumber === order.trackingNumber 
-                          ? { 
-                              ...prevOrder, 
-                              status: 'IN_TRANSIT',
-                              // Keep the preserved original notes
-                              originalCustomerNotes: prevOrder.originalCustomerNotes
-                            }
-                          : prevOrder
-                      )
-                    );
-
-                    // Show notification
-                    setNotification(`Order ${order.trackingNumber} moved to In Transit`);
-                    setTimeout(() => setNotification(""), 3000);
-                    
-                    // Switch to IN_TRANSIT tab
-                    setTimeout(() => {
-                      setActiveTab('IN_TRANSIT');
-                    }, 1000);
-                    
-                    console.log(`Successfully moved order ${order.trackingNumber} to IN_TRANSIT`);
-                  }
-                } catch (error) {
-                  console.error(`Failed to move order ${order.trackingNumber} to IN_TRANSIT:`, error);
-                  alert('Failed to move order to In Transit. Please try again.');
-                }
-              }}
-            >
-              <span>Move to In Transit</span>
-            </button>
-          )}
         </div>
       </div>
     </div>
@@ -519,13 +504,6 @@ export default function DriverAssignedOrders() {
 
   return (
     <div className="container">
-      {/* Notification Banner */}
-      {notification && (
-        <div className="notification-banner">
-          <span>{notification}</span>
-        </div>
-      )}
-      
       <div className="tab-container">
         <div className="tab-container-content">
           {Object.keys(statusConfig).map((status) => 
@@ -542,6 +520,56 @@ export default function DriverAssignedOrders() {
           {filteredOrders.length === 0 ? renderEmptyState() : 
             filteredOrders.map(order => renderOrderCard(order))
           }
+        </div>
+      )}
+
+      {/* Delivery Success Modal Overlay */}
+      {selectedOrder && (
+        <div className="modal-overlay">
+          <div className="delivery-success-modal">
+            <div className="modal-header">
+              <div className="success-icon">
+                <span className="checkmark">✓</span>
+              </div>
+              <button 
+                className="close-modal-button"
+                onClick={() => setSelectedOrder(null)}
+                aria-label="Close delivery card"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <h2 className="modal-title">Order Delivered Successfully</h2>
+            <p className="modal-subtitle">
+              This order has been marked as delivered and completed.
+            </p>
+            
+            {/* Delivery Summary */}
+            <div className="delivery-summary">
+              <h3 className="summary-title">Delivery Summary</h3>
+              
+              <div className="summary-row">
+                <span className="summary-label">Delivered to:</span>
+                <span className="summary-value">{selectedOrder.recipientName}</span>
+              </div>
+              
+              <div className="summary-row">
+                <span className="summary-label">Delivery time:</span>
+                <span className="summary-value">{selectedOrder.deliveredAt ? new Date(selectedOrder.deliveredAt).toLocaleString() : new Date().toLocaleString()}</span>
+              </div>
+              
+              <div className="summary-row">
+                <span className="summary-label">Signature:</span>
+                <span className="summary-value">✓ Collected</span>
+              </div>
+              
+              <div className="summary-row">
+                <span className="summary-label">Notes:</span>
+                <span className="summary-value">{selectedOrder.originalCustomerNotes || selectedOrder.originalNotes || selectedOrder.customerNotes || (selectedOrder.notes && !selectedOrder.notes.includes('Automatically') ? selectedOrder.notes : '') || 'No additional notes'}</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

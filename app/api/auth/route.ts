@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     console.log("Auth proxy - Received body:", body);
     
-    // Use production backend URL
-    const backendUrl = 'https://tmof-couriers.onrender.com';
-    const response = await fetch(`${backendUrl}/api/employee/login`, {
+    const response = await fetch(`${BACKEND_URL}/api/employee/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

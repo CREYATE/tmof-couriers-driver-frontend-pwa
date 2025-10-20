@@ -2,6 +2,21 @@
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
+// Get backend URL from environment or use localhost for development
+const getBackendUrl = () => {
+  if (typeof window !== 'undefined') {
+    // For client-side, we need to determine the backend URL
+    return process.env.NEXT_PUBLIC_BACKEND_URL || 'https://tmof-couriers.onrender.com';
+  }
+  return 'https://tmof-couriers.onrender.com';
+};
+
+// Convert HTTP URL to WebSocket URL
+const getWebSocketUrl = () => {
+  const backendUrl = getBackendUrl();
+  return backendUrl.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws';
+};
+
 class PWAWebSocketService {
   constructor() {
     this.client = null;
@@ -14,9 +29,9 @@ class PWAWebSocketService {
 
   connect() {
     try {
-      // Initialize STOMP client with direct WebSocket (no SockJS) for production backend
+      // Initialize STOMP client with dynamic WebSocket URL
       this.client = new Client({
-        brokerURL: 'wss://tmof-couriers.onrender.com/ws',
+        brokerURL: getWebSocketUrl(),
         connectHeaders: {},
         debug: (str) => {
           console.log('STOMP Debug:', str);
@@ -25,7 +40,7 @@ class PWAWebSocketService {
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
         onConnect: (frame) => {
-          console.log('STOMP WebSocket connected:', frame);
+          console.log('STOMP WebSocket connected to:', getWebSocketUrl(), frame);
           this.reconnectAttempts = 0;
           
           // Re-subscribe to all existing subscriptions
