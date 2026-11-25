@@ -16,7 +16,8 @@ class PWAWebSocketService {
       // Initialize STOMP client with SockJS for production backend
       this.client = new Client({
         webSocketFactory: () => {
-          return new SockJS('https://tmof-couriers.onrender.com/ws');
+          const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://tmof-couriers-production.up.railway.app';
+          return new SockJS(`${backendUrl}/ws`);
         },
         connectHeaders: {},
         debug: (str) => {

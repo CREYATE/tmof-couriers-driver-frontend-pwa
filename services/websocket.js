@@ -2,18 +2,13 @@
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
-// Get backend URL from environment or use localhost for development
-const getBackendUrl = () => {
-  if (typeof window !== 'undefined') {
-    // For client-side, we need to determine the backend URL
-    return process.env.NEXT_PUBLIC_BACKEND_URL || 'https://tmof-couriers.onrender.com';
-  }
-  return 'https://tmof-couriers.onrender.com';
-};
-
-// Convert HTTP URL to WebSocket URL
+// Prefer an explicit WebSocket URL; otherwise derive it from the backend URL.
 const getWebSocketUrl = () => {
-  const backendUrl = getBackendUrl();
+  if (process.env.NEXT_PUBLIC_BACKEND_WS_URL) {
+    return process.env.NEXT_PUBLIC_BACKEND_WS_URL;
+  }
+
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://tmof-couriers-production.up.railway.app';
   return backendUrl.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws';
 };
 

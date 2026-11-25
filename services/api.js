@@ -1,7 +1,7 @@
 // API Configuration for PWA - Using Next.js API routes as proxy
 export const API_CONFIG = {
   BASE_URL: '/api', // Use Next.js API routes as proxy
-  BACKEND_URL: 'https://tmof-couriers.onrender.com',
+  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'https://tmof-couriers-production.up.railway.app',
   
   ENDPOINTS: {
     AUTH: '/auth',
