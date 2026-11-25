@@ -7,6 +7,7 @@ import MainTabNavigator from '../components/navigation/MainTabNavigator';
 import SplashScreen from '../components/screens/SplashScreen';
 import { apiService } from '../services/api';
 
+
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
